@@ -12,7 +12,7 @@ MicroPython, single cooperative loop, no dependencies beyond `ssd1306.py`.
 |---|---|---|
 | 1 | display, joystick, menu shell, idle ghost, persistence | **built** |
 | 2 | listen (WiFi + BLE), familiars, hunger/mood reactions | **built** |
-| 3 | timer, stopwatch, dice, notes, status, buzzer | not yet |
+| 3 | timer, stopwatch, dice, notes, status, buzzer | **built** |
 | 4 | NeoPixel glow, battery-friendly sleep | not yet |
 
 Menu items that aren't built yet open a placeholder where the ghost says it's
@@ -36,9 +36,10 @@ To check, run this in the REPL:
 ## Files on the Pico
 
 ```
-/main.py  config.py  hw.py  ghost.py  memory.py  render.py
-/sprites.py  phrases.py  menu.py
+/main.py  config.py  hw.py  ghost.py  memory.py  render.py  chrono.py
+/sprites.py  phrases.py  menu.py  notes.txt
 /apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py
+      timer.py  alarm.py  stopwatch.py  dice.py  notes.py  status.py
 /lib/ssd1306.py          <- already there
 /ghost_state.json        <- created by the ghost; delete it to "reset" the ghost
 ```
@@ -73,7 +74,7 @@ All pins are in `config.py`.
 | | VRx | GP26 / ADC0 (pin 31) |
 | | VRy | GP27 / ADC1 (pin 32) |
 | | SW | GP16 (pin 21) |
-| Buzzer *(phase 3)* | signal (+) | GP15 (pin 20) |
+| Buzzer | signal (+) | GP15 (pin 20) |
 | | GND (-) | GND |
 | NeoPixel *(phase 4)* | DIN | GP22 (pin 29) |
 
@@ -142,6 +143,28 @@ listen again, hold to go back.
 
 All of this is tunable in the "listening" block of `config.py`. `WIFI_ENABLED`
 and `BLE_ENABLED` turn either radio off.
+
+## Useful things
+
+| Menu item | Controls | Notes |
+|---|---|---|
+| timer | setting: left/right picks minutes or seconds, up/down changes (seconds in 5s steps), click starts. Running: click pauses, hold leaves it running. Paused: click resumes, left resets | Runs in the background. The time left shows in the room's top-right corner and next to "timer" in the menu. When it ends, the alarm takes over the screen (waking it if it's off) and loops for up to 60 s. Any input dismisses it. |
+| stopwatch | click start/stop, up = lap (keeps the last 3), left = reset while stopped | Also keeps running if you leave the screen. |
+| dice | left/right picks d4, d6, d8, d10, d12 or d20, click rolls | The result is picked the moment you click; the tumbling numbers are just for show. The last 3 results are shown underneath. |
+| notes | up/down scrolls, left/right flips between notes | Reads `notes.txt` from the Pico. A line containing only `---` separates notes. Read-only. |
+| status | up/down flips the 2 pages | Page 1: time alive, boots, signals eaten, familiars named, presences felt, mood. Page 2: hunger, restlessness, contentment and glitch level as bars with exact numbers. |
+
+Glitches never touch the timer digits, stopwatch time, dice result, notes text or
+status values. A one-frame inverted flash is the most they get.
+
+### Buzzer: active or passive?
+
+Touch the buzzer's + leg to 3V3 and - to GND for a second. A continuous beep means
+**active**: set `BUZZER_ACTIVE = True`, and you'll get beeps on and off. Just a
+click means **passive** (the default): it plays real tones and pitch glides. If
+a passive buzzer is too loud, lower `BUZZER_DUTY`. `BUZZER_CLICKS = False`
+silences the UI sounds but keeps the alarm, and `BUZZER_ENABLED = False`
+silences everything.
 
 ## Memory and flash
 

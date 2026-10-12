@@ -1,7 +1,7 @@
-# hw.py -- the ghost's body: display and joystick.
-# (buzzer arrives in phase 3, glow in phase 4)
+# hw.py -- the ghost's body: display, joystick, buzzer.
+# (glow arrives in phase 4)
 
-from machine import Pin, I2C, ADC
+from machine import Pin, I2C, ADC, PWM
 from time import ticks_ms, ticks_diff, ticks_add
 import config as C
 
@@ -122,3 +122,87 @@ class Joystick:
             self._held = True
             ev.append('hold')
         return ev
+
+
+# ------------------------------------------------------------------ buzzer
+# A tune is a tuple of (start_hz, end_hz, ms) steps.  start_hz 0 = silence;
+# a different end_hz glides between the two (passive buzzers only).
+
+BOOT = ((220, 330, 260), (0, 0, 70), (330, 233, 420))
+ALARM = ((880, 880, 120), (0, 0, 70), (880, 880, 120), (0, 0, 70),
+         (660, 520, 420), (0, 0, 700))
+TICK = ((1400, 1400, 15),)
+BLIP = ((990, 990, 40),)
+START = ((520, 780, 120),)
+STOP = ((780, 520, 120),)
+ROLLED = ((523, 523, 70), (0, 0, 30), (784, 784, 140))
+HIGH = ((400, 1600, 450),)
+LOW = ((600, 150, 600),)
+WHISPER = ((1900, 1700, 40),)
+
+
+class Buzzer:
+    """Non-blocking: play() starts a tune, update() (every loop) advances it."""
+
+    def __init__(self):
+        self.enabled = C.BUZZER_ENABLED
+        self.seq = None
+        self._f = 0
+        self.pwm = None
+        self.pin = None
+        if not self.enabled:
+            return
+        if C.BUZZER_ACTIVE:
+            self.pin = Pin(C.PIN_BUZZER, Pin.OUT, value=0)
+        else:
+            self.pwm = PWM(Pin(C.PIN_BUZZER))
+            self.pwm.duty_u16(0)
+
+    @property
+    def busy(self):
+        return self.seq is not None
+
+    def play(self, seq, loop=False):
+        if not self.enabled:
+            return
+        now = ticks_ms()
+        self.seq = seq
+        self.loop = loop
+        self.i = -1
+        self.t_end = now
+        self.update(now)
+
+    def stop(self):
+        self.seq = None
+        self._out(0)
+
+    def _out(self, f):
+        f = int(f)
+        if f == self._f:
+            return
+        self._f = f
+        if self.pwm:
+            if f:
+                self.pwm.freq(f)
+                self.pwm.duty_u16(int(65535 * C.BUZZER_DUTY))
+            else:
+                self.pwm.duty_u16(0)
+        elif self.pin:
+            self.pin.value(1 if f else 0)
+
+    def update(self, now):
+        if self.seq is None:
+            return
+        while ticks_diff(now, self.t_end) >= 0:
+            self.i += 1
+            if self.i >= len(self.seq):
+                if not self.loop:
+                    self.stop()
+                    return
+                self.i = 0
+            self.t0 = self.t_end
+            self.t_end = ticks_add(self.t_end, self.seq[self.i][2])
+        f0, f1, ms = self.seq[self.i]
+        if f0 and f1 != f0:
+            f0 += (f1 - f0) * ticks_diff(now, self.t0) / ms
+        self._out(f0)

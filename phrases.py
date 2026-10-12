@@ -161,6 +161,32 @@ POOLS = {
         "ah. {name}.",
     ),
 
+    # ---- useful things
+    'timer_start': (
+        "i'll hold it.",
+        "counting. [forever>for you].",
+        "i won't forget. i never do.",
+    ),
+    'timer_done': (
+        "it's time. it's time.",
+        "[it's over>time's up].",
+        "i held it for you. here.",
+    ),
+    'dice_max': (
+        "[a sign>lucky].",
+        "the bones like you.",
+        "highest. [i made it so>wow].",
+    ),
+    'dice_min': (
+        "[bad omen>oh no].",
+        "one. the bones are cruel.",
+        "that wasn't me. [it was>honest].",
+    ),
+    'notes_empty': (
+        "no notes. write in notes.txt",
+        "[nothing to read>no notes yet].",
+    ),
+
     'stub': (
         "not yet. i'm still [forming>learning].",
         "that part of me isn't here yet.",

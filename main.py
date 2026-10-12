@@ -14,14 +14,18 @@ import phrases
 from memory import Memory
 from ghost import Ghost
 from render import Renderer, Speech, Puppet, wrap
+from chrono import Countdown, Stopwatch
 
 
 class Ctx:
     """Everything a screen might need, passed around as one object."""
 
-    def __init__(self, oled, joy, mem, ghost):
+    def __init__(self, oled, joy, buzzer, mem, ghost):
         self.oled = oled
         self.joy = joy
+        self.buzzer = buzzer
+        self.timer = Countdown(mem.state.get('timer_s', 300))
+        self.watch = Stopwatch()
         self.mem = mem
         self.ghost = ghost
         self.r = Renderer(oled)
@@ -65,6 +69,20 @@ class Ctx:
         if self._queue and not self.speech.busy:
             self.speech.say(self._queue.pop(0), now, self.ghost.glitch)
 
+    def chirp(self, tune):
+        """A small UI sound (not alarms), if those are switched on."""
+        if C.BUZZER_CLICKS and not self.buzzer.busy:
+            self.buzzer.play(tune)
+
+    def alarm(self, now):
+        """The countdown ran out: wake up and say so, whatever is on screen."""
+        if not self.awake:
+            self.awake = True
+            self.oled.poweron()
+        self.ghost.poke(now)
+        import apps.alarm
+        self.push(apps.alarm.App())
+
     # ---- screen power
     def screen_off(self):
         if not self.awake:
@@ -104,6 +122,10 @@ def loop(ctx):
     while True:
         now = ticks_ms()
         evs = joy.poll(now)
+        ctx.buzzer.update(now)
+        ctx.watch.tick(now)
+        if ctx.timer.check(now):
+            ctx.alarm(now)
 
         # ---- screen off: just keep time and wait for a click
         if not ctx.awake:
@@ -175,13 +197,14 @@ def run():
         print("[boot] display failed:", e)
         raise
     joy = hw.Joystick()
+    buzzer = hw.Buzzer()
     mem = Memory()
     ghost = Ghost(mem)
     situation, days = ghost.on_boot()
     print("[boot] boot #%d, %s, alive %.2f days, mood=%s"
           % (mem.state['boots'], situation, ghost.days_alive, ghost.mood))
 
-    ctx = Ctx(oled, joy, mem, ghost)
+    ctx = Ctx(oled, joy, buzzer, mem, ghost)
     import apps.home
     import apps.wake
     ctx.push(apps.home.App())
@@ -189,12 +212,14 @@ def run():
     try:
         loop(ctx)
     except KeyboardInterrupt:
+        buzzer.stop()
         mem.save()
         oled.fill(0)
         oled.show()
         print("[main] stopped")
     except Exception as e:
         sys.print_exception(e)
+        buzzer.stop()
         mem.save()
         show_crash(oled, e)
 

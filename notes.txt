@@ -1,0 +1,14 @@
+these are your notes. edit notes.txt on your PC and upload it to the Pico.
+ghostie can read them but never changes them.
+---
+shopping
+- milk
+- batteries (AAA)
+- something for the ghost
+---
+ghost care
+- carry it somewhere new so it can listen and eat
+- don't ignore it too long
+- it remembers
+---
+a line of exactly three dashes starts a new note. left/right flips between notes, up/down scrolls.

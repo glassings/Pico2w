@@ -32,6 +32,7 @@ def _fresh():
         'presences': 0,         # BLE presences sensed, all time
         'familiars': {},        # hash -> [nickname, times_seen]
         'mood': {'hunger': 40.0, 'restless': 10.0, 'content': 50.0},
+        'timer_s': 300,         # last countdown you set
     }
 
 

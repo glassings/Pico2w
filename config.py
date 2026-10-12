@@ -32,11 +32,15 @@ BTN_HOLD_MS = 650           # press longer than this = "hold" (go back)
 JOY_DEBUG = False           # True: print raw joystick readings to the REPL
 
 # ----------------------------------------------------------------- buzzer
-# (phase 3) signal -> GP15.  ACTIVE buzzers beep on their own when powered;
+# signal -> GP15, - -> GND.  ACTIVE buzzers beep on their own when powered;
 # PASSIVE buzzers need a tone (PWM).  Set BUZZER_ACTIVE to match yours.
 PIN_BUZZER = 15
-BUZZER_ENABLED = False
-BUZZER_ACTIVE = False
+BUZZER_ENABLED = True
+BUZZER_ACTIVE = False       # False = passive (tones, glides); True = active (beeps)
+BUZZER_DUTY = 0.5           # passive only: 0.5 = loudest, lower = thinner/quieter
+BUZZER_BOOT_CHIME = True    # little sound while it wakes up
+BUZZER_CLICKS = True        # dice rattle, start/stop blips, the odd whisper
+ALARM_MAX_S = 60            # timer alarm gives up sounding after this
 
 # --------------------------------------------------------------- neopixel
 # (phase 4) one WS2812 "glow" on GP22.

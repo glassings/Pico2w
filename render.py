@@ -18,6 +18,31 @@ def _chance(p):
     return random.random() < p
 
 
+_RUNS = {}
+
+
+def _runs(ch):
+    # horizontal pixel runs of one 8x8 font glyph: [(x, y, width), ...]
+    r = _RUNS.get(ch)
+    if r is None:
+        import framebuf
+        fb = framebuf.FrameBuffer(bytearray(8), 8, 8, framebuf.MONO_HLSB)
+        fb.text(ch, 0, 0, 1)
+        r = []
+        for y in range(8):
+            x = 0
+            while x < 8:
+                if fb.pixel(x, y):
+                    x0 = x
+                    while x < 8 and fb.pixel(x, y):
+                        x += 1
+                    r.append((x0, y, x - x0))
+                else:
+                    x += 1
+        _RUNS[ch] = r
+    return r
+
+
 class Renderer:
     def __init__(self, oled):
         self.o = oled
@@ -35,6 +60,18 @@ class Renderer:
 
     def center(self, s, y, c=1):
         self.o.text(s, (W - len(s) * 8) // 2, y, c)
+
+    def big(self, s, x, y, scale=3):
+        """The 8x8 font, scaled up -- for numbers that matter."""
+        o = self.o
+        step = 8 * scale
+        for ch in s:
+            for gx, gy, w in _runs(ch):
+                o.fill_rect(x + gx * scale, y + gy * scale, w * scale, scale, 1)
+            x += step
+
+    def big_center(self, s, y, scale=3):
+        self.big(s, (W - len(s) * 8 * scale) // 2, y, scale)
 
     def sprite(self, spr, x, y):
         self.o.blit(spr.fb, int(x), int(y), 0)      # dark pixels transparent

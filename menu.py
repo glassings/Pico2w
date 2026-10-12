@@ -3,6 +3,7 @@
 
 import apps
 import sprites
+import chrono
 import config as C
 
 ITEMS = (
@@ -68,7 +69,10 @@ class Menu(apps.App):
             y = TOP + row * STEP
             if i == self.sel:
                 r.sprite(sprites.MINI, 1 if (now // 400) & 1 else 0, y)
-            r.text(ITEMS[i][0], 12, y)
+            label = ITEMS[i][0]
+            if label == 'timer' and ctx.timer.active:
+                label += ' ' + chrono.fmt(ctx.timer.remaining(now) + 999)
+            r.text(label, 12, y)
         # scroll hints
         if self.scroll > 0:
             r.text('^', 88, TOP)

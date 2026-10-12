@@ -4,6 +4,7 @@
 from time import ticks_diff
 from apps import App as Screen
 import sprites
+import config as C
 
 
 class App(Screen):
@@ -16,6 +17,9 @@ class App(Screen):
         super().enter(ctx)
         self.t0 = ctx.now()
         ctx.puppet.set_bounds(52, 12, 52, 12, snap=True)
+        if C.BUZZER_BOOT_CHIME:
+            import hw
+            ctx.buzzer.play(hw.BOOT)
 
     @property
     def glitch(self):

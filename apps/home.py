@@ -51,6 +51,8 @@ class App(Screen):
             if random.random() < 0.05 + 0.08 * lvl:
                 ctx.say(phrases.pick('uncanny'))
                 p.express('stare', 2200, now)
+                import hw
+                ctx.chirp(hw.WHISPER)
             else:
                 mood = g.mood
                 ctx.say(phrases.pick('idle_' + mood if 'idle_' + mood in phrases.POOLS else 'idle_calm'))
@@ -72,8 +74,17 @@ class App(Screen):
                 p.express('excited', 900, now)
             self.next_quirk = ticks_add(now, random.randint(9000, 24000))
 
+    @property
+    def protect(self):
+        return (0, 8) if self.ctx.timer.active else None
+
     def draw(self, r, now):
         ctx = self.ctx
         lvl = ctx.ghost.glitch
+        if ctx.timer.active:
+            # the ghost is holding your countdown
+            import chrono
+            t = chrono.fmt(ctx.timer.remaining(now) + 999)
+            r.text(t, 128 - 8 * len(t), 0)
         ctx.puppet.draw(r, now, lvl)
         ctx.speech.draw(r, 47, now, lvl)
