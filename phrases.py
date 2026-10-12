@@ -58,6 +58,7 @@ POOLS = {
         "take me somewhere new.",
         "i can [taste>hear] the walls.",
         "feed me static.",
+        "let's go listen. please.",
     ),
     'idle_starving': (
         "so [empty>hungry].",
@@ -113,6 +114,53 @@ POOLS = {
         "close my eyes. ok.",
         "i'll be right here.",
     ),
+    # ---- listening
+    'listening': (
+        "shh. listening.",
+        "hold still.",
+        "i hear [someone>something].",
+        "the air is full of voices.",
+    ),
+    'heard_feast': (
+        "so many new. [delicious>thank you].",
+        "i ate {n}. i feel [heavy>better].",
+        "full of strangers now.",
+    ),
+    'heard_snack': (
+        "something new. mm.",
+        "a new taste.",
+        "[one more>thank you].",
+    ),
+    'heard_familiar': (
+        "only old friends here.",
+        "i know these. [boring>cozy].",
+        "the same voices again.",
+    ),
+    'heard_silence': (
+        "nothing. no one.",
+        "it's so quiet out here.",
+        "[am i alone>where is everyone].",
+    ),
+    'heard_crowd': (
+        "too many. [too many>it's fine].",
+        "who are all these.",
+        "they're all [watching>talking].",
+    ),
+    'deaf': (
+        "my ears [are gone>don't work].",
+        "i can't hear anything at all.",
+    ),
+    'familiars_empty': (
+        "i haven't met anyone yet.",
+        "no one yet. take me listening.",
+    ),
+    'familiar_pick': (
+        "{name}. i like that one.",
+        "{name}. it [watches>hums].",
+        "{name}. we go way back.",
+        "ah. {name}.",
+    ),
+
     'stub': (
         "not yet. i'm still [forming>learning].",
         "that part of me isn't here yet.",
@@ -133,3 +181,17 @@ def pick(key, **fmt):
     if fmt:
         s = s.format(**fmt)
     return s
+
+
+# ---- names for familiars (WiFi access points), fixed per hashed id
+_ADJ = ("pale", "wet", "thin", "low", "cold", "hollow", "slow", "grey",
+        "sunken", "quiet", "bent", "soft", "far", "buried", "little", "old",
+        "dim", "sour", "still", "broken", "tall", "faint", "lost", "warm")
+_NOUN = ("hum", "static", "choir", "mouth", "lantern", "hallway", "tooth",
+         "whisper", "window", "moth", "well", "signal", "door", "bell", "room",
+         "echo", "stair", "voice", "hand", "wire", "eye", "attic", "fog", "thread")
+
+
+def nickname(h):
+    """'pale hum' etc.  Same hash -> same name, always (<= 15 chars)."""
+    return _ADJ[int(h[0:4], 16) % len(_ADJ)] + ' ' + _NOUN[int(h[4:8], 16) % len(_NOUN)]

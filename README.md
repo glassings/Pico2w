@@ -11,7 +11,7 @@ MicroPython, single cooperative loop, no dependencies beyond `ssd1306.py`.
 | Phase | What | State |
 |---|---|---|
 | 1 | display, joystick, menu shell, idle ghost, persistence | **built** |
-| 2 | listen (WiFi + BLE), familiars, hunger/mood reactions | not yet |
+| 2 | listen (WiFi + BLE), familiars, hunger/mood reactions | **built** |
 | 3 | timer, stopwatch, dice, notes, status, buzzer | not yet |
 | 4 | NeoPixel glow, battery-friendly sleep | not yet |
 
@@ -38,7 +38,7 @@ To check, run this in the REPL:
 ```
 /main.py  config.py  hw.py  ghost.py  memory.py  render.py
 /sprites.py  phrases.py  menu.py
-/apps/__init__.py  home.py  wake.py  sleep.py  stub.py
+/apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py
 /lib/ssd1306.py          <- already there
 /ghost_state.json        <- created by the ghost; delete it to "reset" the ghost
 ```
@@ -113,6 +113,36 @@ give a negative `y`.
   says so. When Thonny or `mpremote` has set the clock (they do this when
   connected to a PC), it knows and comments on it.
 
+## Listening and familiars
+
+**listen** scans WiFi first (about 2 s, during which the screen holds still, because
+the Pico's WiFi scan blocks), then Bluetooth for 4 s while rings pulse out from
+the ghost. Then it reports what it heard:
+
+* `wifi 12 +3`: 12 access points, 3 never heard before
+* `near 8 +5`: 8 Bluetooth presences, 5 new this power-on
+* `ate 8`: new signals eaten this time
+
+Push down to see the loudest networks with their live name, signal strength in
+dBm, and the nickname the ghost gave them (`*` = new, `~` = a familiar). Click to
+listen again, hold to go back.
+
+* **WiFi access points become familiars.** Each gets a permanent nickname
+  ("pale hum", "sunken whisper") and a count of how often it was heard. The
+  **familiars** menu lists them, most-met first. Click one and the ghost tells you
+  what it thinks of it.
+* **Bluetooth devices are passing presences.** Phones change their addresses
+  constantly, so these are only remembered (hashed, in RAM) until the power goes
+  off, and are never treated as individuals.
+* **Feeding:** a new access point eats 6 hunger, a new presence 1.5, and a
+  familiar heard again 0.5. One scan can eat at most 45. Feeding also raises
+  contentment.
+* **Crowds:** 15 or more strangers at once makes it nervous: restlessness
+  goes up even though it ate.
+
+All of this is tunable in the "listening" block of `config.py`. `WIFI_ENABLED`
+and `BLE_ENABLED` turn either radio off.
+
 ## Memory and flash
 
 `ghost_state.json` stores time alive, boot count, totals fed, familiars (from
@@ -123,8 +153,8 @@ phase 2) and mood. It's written:
 * when the screen goes to sleep, and when the program is stopped.
 
 Each save writes a temporary file and then renames it over the old one, so a
-power cut mid-save loses at most a few minutes. Radio identifiers will only
-be stored as salted SHA-256 hashes, and SSIDs are never written to flash.
+power cut mid-save loses at most a few minutes. Radio identifiers are only
+stored as salted SHA-256 hashes, and SSIDs are never written to flash.
 
 ## Layout
 

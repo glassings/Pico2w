@@ -58,8 +58,22 @@ RESTLESS_NAP_DECAY_PER_MIN = 4.0
 RESTLESS_PER_INPUT = 10.0   # each joystick event calms it this much
 CONTENT_TAU_S = 600         # how slowly contentment follows the other needs
 
-CHATTER_MIN_S = 14          # idle remarks happen between these gaps
+CHATTER_MIN_S = 14         # idle remarks happen between these gaps
 CHATTER_MAX_S = 40
+
+# ------------------------------------------------------------ listening
+WIFI_ENABLED = True
+BLE_ENABLED = True
+BLE_SCAN_MS = 4000          # how long it listens for Bluetooth
+BLE_MAX = 200               # ignore anything past this many presences per scan
+
+FEED_NEW_WIFI = 6.0         # hunger eaten per never-seen access point
+FEED_NEW_BLE = 1.5          # ...per new Bluetooth presence
+FEED_FAMILIAR = 0.5         # ...per familiar heard again (counts up to 10)
+FEED_MAX = 45.0             # most hunger one scan can satisfy
+CROWD_SIZE = 15             # this many strangers at once makes it nervous
+CROWD_RESTLESS = 15.0
+MAX_FAMILIARS = 200         # least-seen ones are forgotten past this
 
 # ---------------------------------------------------------------- storage
 STATE_FILE = "ghost_state.json"

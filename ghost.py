@@ -38,6 +38,10 @@ class Ghost:
         self.last_input = now
         self._last_tick = now
         self.napping = False
+        # Bluetooth MACs are randomised by phones, so presences are only
+        # remembered for this power-on (in RAM, hashed): hash -> scan number
+        self.recent_ble = {}
+        self.scans = 0
 
     # ------------------------------------------------------------ boot
     def on_boot(self):
@@ -109,6 +113,79 @@ class Ghost:
         woke = self.napping
         self.napping = False
         return woke
+
+    def feed(self, wifi, ble):
+        """Digest one listen.  wifi / ble are lists of hashed ids.
+        Returns a summary dict, including 'kind' for how it reacts."""
+        import phrases
+        s = self.mem.state
+        fam = s['familiars']
+        boot = s['boots']
+
+        new_w = known_w = 0
+        for h in wifi:
+            f = fam.get(h)
+            if f is None:
+                if len(fam) >= C.MAX_FAMILIARS:
+                    self._forget_one(fam)
+                fam[h] = [phrases.nickname(h), 1, boot]
+                new_w += 1
+            else:
+                while len(f) < 3:
+                    f.append(boot)
+                f[1] += 1
+                f[2] = boot
+                known_w += 1
+
+        new_b = 0
+        for h in ble:
+            if h not in self.recent_ble:
+                new_b += 1
+            self.recent_ble[h] = self.scans
+        self.scans += 1
+        if len(self.recent_ble) > 120:
+            cut = self.scans - 3
+            for h in [h for h in self.recent_ble if self.recent_ble[h] < cut]:
+                del self.recent_ble[h]
+
+        food = new_w * C.FEED_NEW_WIFI + new_b * C.FEED_NEW_BLE + min(known_w, 10) * C.FEED_FAMILIAR
+        food = min(food, C.FEED_MAX)
+        self.hunger = _clamp(self.hunger - food)
+        self.content = _clamp(self.content + food * 0.5)
+
+        strangers = new_w + new_b
+        crowd = strangers >= C.CROWD_SIZE
+        if crowd:
+            self.restless = _clamp(self.restless + C.CROWD_RESTLESS)
+            self.content = _clamp(self.content - 5)
+
+        s['fed'] += strangers
+        s['presences'] += new_b
+        self.mem.touch(urgent=True)
+
+        if crowd:
+            kind = 'crowd'
+        elif strangers >= 5:
+            kind = 'feast'
+        elif strangers:
+            kind = 'snack'
+        elif wifi or ble:
+            kind = 'familiar'
+        else:
+            kind = 'silence'
+        return {'kind': kind, 'wifi': len(wifi), 'wifi_new': new_w,
+                'ble': len(ble), 'ble_new': new_b, 'ate': strangers}
+
+    @staticmethod
+    def _forget_one(fam):
+        worst = None
+        for h in fam:
+            f = fam[h]
+            key = (f[1], f[2] if len(f) > 2 else 0)
+            if worst is None or key < worst[0]:
+                worst = (key, h)
+        if worst:
+            del fam[worst[1]]
 
     # ------------------------------------------------------------ readouts
     @property
