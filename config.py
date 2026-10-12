@@ -16,7 +16,7 @@ OLED_CONTRAST = 180     # 0..255; lower = dimmer = less power
 # Power the module from 3.3V, NOT 5V: the Pico ADC tops out at 3.3V.
 PIN_JOY_X = 26          # ADC0
 PIN_JOY_Y = 27          # ADC1
-PIN_JOY_SW = 15         # internal pull-up, pressed = low
+PIN_JOY_SW = 16         # internal pull-up, pressed = low
 
 # Joystick modules get mounted every which way on a breadboard.  If "up"
 # moves the cursor down (etc), flip these until it feels right.
@@ -32,9 +32,9 @@ BTN_HOLD_MS = 650           # press longer than this = "hold" (go back)
 JOY_DEBUG = False           # True: print raw joystick readings to the REPL
 
 # ----------------------------------------------------------------- buzzer
-# (phase 3) signal -> GP16.  ACTIVE buzzers beep on their own when powered;
+# (phase 3) signal -> GP15.  ACTIVE buzzers beep on their own when powered;
 # PASSIVE buzzers need a tone (PWM).  Set BUZZER_ACTIVE to match yours.
-PIN_BUZZER = 16
+PIN_BUZZER = 15
 BUZZER_ENABLED = False
 BUZZER_ACTIVE = False
 

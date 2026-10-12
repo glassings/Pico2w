@@ -72,8 +72,8 @@ All pins are in `config.py`.
 | | GND | GND |
 | | VRx | GP26 / ADC0 (pin 31) |
 | | VRy | GP27 / ADC1 (pin 32) |
-| | SW | GP15 (pin 20) |
-| Buzzer *(phase 3)* | signal (+) | GP16 (pin 21) |
+| | SW | GP16 (pin 21) |
+| Buzzer *(phase 3)* | signal (+) | GP15 (pin 20) |
 | | GND (-) | GND |
 | NeoPixel *(phase 4)* | DIN | GP22 (pin 29) |
 
