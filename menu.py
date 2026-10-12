@@ -9,6 +9,7 @@ import config as C
 ITEMS = (
     ('listen', 'listen'),
     ('familiars', 'familiars'),
+    ('followers', 'followers'),
     ('timer', 'timer'),
     ('stopwatch', 'stopwatch'),
     ('dice', 'dice'),

@@ -14,6 +14,7 @@ from time import ticks_diff
 from apps import App as Screen
 import phrases
 import sprites
+import trackers
 import config as C
 
 _IRQ_SCAN_RESULT = 5
@@ -49,6 +50,8 @@ class App(Screen):
         self.loud = []          # [(ssid, rssi, nickname, is_new)] strongest first
         self.wifi_ids = []
         self.ble_seen = {}
+        self.trk = {}           # addr -> [kind, state, rssi, stable] (RAM, this scan)
+        self.trackers = []      # after digest: [(kind, state, rssi, id, stable)]
         self.ble_done = False
         self.result = None
         self.page = 0
@@ -103,6 +106,13 @@ class App(Screen):
         if event == _IRQ_SCAN_RESULT:
             addr = bytes(data[1])
             rssi = data[3]
+            t = self.trk.get(addr)
+            if t is None:
+                c = trackers.classify(data[4])
+                if c and len(self.trk) < 40:
+                    self.trk[addr] = [c[0], c[1], rssi, c[2]]
+            elif rssi > t[2]:
+                t[2] = rssi
             prev = self.ble_seen.get(addr)
             if prev is None:
                 if len(self.ble_seen) < C.BLE_MAX:
@@ -128,7 +138,16 @@ class App(Screen):
         ctx = self.ctx
         mem = ctx.mem
         ble_ids = [mem.hash_id(a) for a in self.ble_seen]
+        found = []
+        for a, (kind, state, rssi, stable) in self.trk.items():
+            found.append((kind, state, rssi, mem.hash_id(a), stable))
+        found.sort(key=lambda t: -t[2])
+        self.trackers = found
+        if C.TRACKER_DEBUG:
+            for kind, state, rssi, h, stable in found:
+                print("[trk] %-8s %-4s %4d id=%s data=%s" % (kind, state, rssi, h, trackers.hexs(stable)))
         self.ble_seen = {}                      # raw MACs gone
+        self.trk = {}
         self._stop_ble()
         r = ctx.ghost.feed(self.wifi_ids, ble_ids)
         self.result = r
@@ -163,8 +182,12 @@ class App(Screen):
 
     # ------------------------------------------------------------ input
     @property
+    def wifi_pages(self):
+        return (len(self.loud) + _PER_PAGE - 1) // _PER_PAGE
+
+    @property
     def pages(self):
-        return 1 + (len(self.loud) + _PER_PAGE - 1) // _PER_PAGE
+        return 1 + self.wifi_pages + (len(self.trackers) + _PER_PAGE - 1) // _PER_PAGE
 
     def event(self, ev):
         if self.state != 'results':
@@ -195,7 +218,9 @@ class App(Screen):
         ctx = self.ctx
         lvl = ctx.ghost.glitch
         if self.state == 'results':
-            if self.page:
+            if self.page > self.wifi_pages:
+                self._draw_trackers(r)
+            elif self.page:
                 self._draw_list(r)
             else:
                 self._draw_summary(r, now, lvl)
@@ -236,6 +261,8 @@ class App(Screen):
     def _draw_summary(self, r, now, lvl):
         res = self.result
         r.text("i heard:", 0, 0)
+        if self.trackers:
+            r.text("%dtrk" % len(self.trackers), 72, 0)
         r.text("wifi %3d +%d" % (res['wifi'], res['wifi_new']), 0, 12)
         r.text("near %3d +%d" % (res['ble'], res['ble_new']), 0, 22)
         r.text("ate  %3d" % res['ate'], 0, 32)
@@ -253,4 +280,17 @@ class App(Screen):
             r.text(ssid[:11], 0, y)
             r.text("%d" % rssi, 96, y)
             r.text(("* " if new else "~ ") + nick, 0, y + 9)
+            y += 18
+
+    def _draw_trackers(self, r):
+        # debug view: what the tracker classifier saw in this scan
+        r.text("trackers", 0, 0)
+        r.text("%d/%d" % (self.page, self.pages - 1), 96, 0)
+        start = (self.page - 1 - self.wifi_pages) * _PER_PAGE
+        y = 11
+        for kind, state, rssi, h, stable in self.trackers[start:start + _PER_PAGE]:
+            r.text(trackers.LABEL[kind], 0, y)
+            r.text(state, 67, y)
+            r.text("%d" % rssi, 104, y)
+            r.text("  " + (trackers.hexs(stable, 4) or "-"), 0, y + 9)
             y += 18

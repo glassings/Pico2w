@@ -36,9 +36,9 @@ To check, run this in the REPL:
 ## Files on the Pico
 
 ```
-/main.py  config.py  hw.py  ghost.py  memory.py  render.py  chrono.py
+/main.py  config.py  hw.py  ghost.py  memory.py  render.py  chrono.py  trackers.py
 /sprites.py  phrases.py  menu.py  notes.txt
-/apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py
+/apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py  followers.py
       timer.py  alarm.py  stopwatch.py  dice.py  notes.py  status.py
 /lib/ssd1306.py          <- already there
 /ghost_state.json        <- created by the ghost; delete it to "reset" the ghost
@@ -143,6 +143,25 @@ listen again, hold to go back.
 
 All of this is tunable in the "listening" block of `config.py`. `WIFI_ENABLED`
 and `BLE_ENABLED` turn either radio off.
+
+## Trackers (in progress)
+
+Bluetooth item trackers are recognised from their advertisements (receive-only,
+nothing is ever connected to). The signatures come from AirGuard's detection code
+and the Find Hub (FMDN) spec, and are in `trackers.py`:
+
+| Family | How it's recognised | Separated from owner? |
+|---|---|---|
+| Apple Find My (AirTag, Find My accessories, AirPods, offline Apple devices) | manufacturer data `4C 00`, type `12`; status byte bits 4-5 give the device kind | yes: payload length `0x19` = away, short = near owner |
+| Tile | service UUID `FEED` / `FEEC` | not exposed |
+| Samsung SmartTag | service UUID `FD5A` | not decoded yet |
+| Google Find Hub tags | service data `FEAA`, frame `40` / `41` (other Eddystone frames ignored) | `41` = unwanted-tracking mode = away |
+
+**followers** (menu) is currently a raw live view: it scans continuously and lists
+every tracker it hears with its family, state, signal strength, a few payload bytes
+and seconds since last heard. **listen** also lists trackers on its last result
+pages. With `TRACKER_DEBUG = True` each detection's full advertisement is printed
+to the REPL.
 
 ## Useful things
 

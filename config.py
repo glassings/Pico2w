@@ -79,6 +79,9 @@ CROWD_SIZE = 15             # this many strangers at once makes it nervous
 CROWD_RESTLESS = 15.0
 MAX_FAMILIARS = 200         # least-seen ones are forgotten past this
 
+# ------------------------------------------------------------- trackers
+TRACKER_DEBUG = True        # print every tracker detection to the REPL
+
 # ---------------------------------------------------------------- storage
 STATE_FILE = "ghost_state.json"
 NOTES_FILE = "notes.txt"
