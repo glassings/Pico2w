@@ -25,7 +25,7 @@ class App(Screen):
         ctx = self.ctx
         p = ctx.puppet
         now = ctx.now()
-        if ev == 'click':
+        if ev == 'click' or (ev == 'down' and C.INPUT_ONE_BUTTON):
             import menu
             ctx.speech.clear()
             ctx.push(menu.Menu())
