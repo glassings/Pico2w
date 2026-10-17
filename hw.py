@@ -299,6 +299,40 @@ class Buttons:
         return ev
 
 
+class OneButton:
+    """Everything with one button, by counting clicks.
+
+      1 click  = down (next)      2 clicks = click (confirm)
+      3 clicks = hold (back)      4+ clicks = up
+      long press = left (switch field / previous / reset)
+    """
+
+    def __init__(self):
+        self.key = _Key(C.PIN_ONE_BTN)
+        self.n = 0              # clicks counted so far
+        self.t = 0              # press time while down, release time after
+        self.long = False
+
+    def poll(self, now):
+        ev = []
+        k = self.key
+        e = k.update(now)
+        if e == 'press':
+            self.t = now
+            self.long = False
+        elif e == 'release' and not self.long:
+            self.n += 1
+            self.t = now
+        if k.down and not self.long and ticks_diff(now, self.t) >= C.BTN_HOLD_MS:
+            self.long = True
+            self.n = 0
+            ev.append('left')
+        elif self.n and not k.down and ticks_diff(now, self.t) >= C.MULTI_CLICK_MS:
+            ev.append(('down', 'click', 'hold')[self.n - 1] if self.n <= 3 else 'up')
+            self.n = 0
+        return ev
+
+
 # quadrature state table: (previous AB << 2 | new AB) -> step
 _QUAD = (0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0)
 
@@ -350,6 +384,8 @@ class Inputs:
             self.srcs.append(Joystick())
         if C.INPUT_BUTTONS:
             self.srcs.append(Buttons())
+        if C.INPUT_ONE_BUTTON:
+            self.srcs.append(OneButton())
         if C.INPUT_ENCODER:
             self.srcs.append(Encoder())
         if not self.srcs:

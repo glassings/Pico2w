@@ -84,8 +84,21 @@ the centre position is calibrated at power-up.
 
 ## Controls hardware
 
-Pick any mix in `config.py` (`INPUT_JOYSTICK`, `INPUT_BUTTONS`, `INPUT_ENCODER`).
-They all send the same events. The default is **push buttons only**.
+Pick any mix in `config.py` (`INPUT_JOYSTICK`, `INPUT_BUTTONS`, `INPUT_ONE_BUTTON`, `INPUT_ENCODER`).
+They all send the same events. The default is **one button**.
+
+**One button** (`INPUT_ONE_BUTTON`, the default): GP20 (pin 26) to GND.
+
+| Do this | Means |
+|---|---|
+| 1 click | down / next |
+| 2 clicks | confirm (click) |
+| 3 clicks | back |
+| 4+ clicks | up |
+| long press | left: switch timer field, change die, flip note, reset |
+
+Clicks are counted after a short pause (`MULTI_CLICK_MS`, 400 ms), so every
+action lands a moment after you stop clicking. Any press wakes the screen.
 
 **Push buttons.** Each one goes between its GPIO and GND, with no resistors
 (the Pico's internal pull-ups are used). Only the first three are required:

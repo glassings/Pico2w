@@ -127,9 +127,9 @@ def loop(ctx):
         if ctx.timer.check(now):
             ctx.alarm(now)
 
-        # ---- screen off: just keep time and wait for a click
+        # ---- screen off: just keep time and wait for any input
         if not ctx.awake:
-            if 'click' in evs:
+            if evs:
                 ghost.poke(now)
                 ctx.screen_on(now)
             ghost.tick(now)

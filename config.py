@@ -15,8 +15,15 @@ OLED_CONTRAST = 180     # 0..255; lower = dimmer = less power
 # --------------------------------------------------------------- controls
 # Any mix can be on at once; they all send the same events.
 INPUT_JOYSTICK = False      # True only if the joystick is plugged in
-INPUT_BUTTONS = True
+INPUT_BUTTONS = False       # 3-6 buttons (below)
+INPUT_ONE_BUTTON = True     # everything on one button (below)
 INPUT_ENCODER = False
+
+# One button: between its GPIO and GND.
+#   1 click = down   2 clicks = confirm   3 clicks = back   4+ clicks = up
+#   long press = left (switch timer field, change die, flip note, reset)
+PIN_ONE_BTN = 20            # physical pin 26
+MULTI_CLICK_MS = 400        # pause this long and the clicks are counted
 
 # Push buttons: each one between its GPIO and GND (no resistors needed).
 # up, down and ok are required; set the others to None if not fitted.
