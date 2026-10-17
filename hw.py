@@ -206,3 +206,157 @@ class Buzzer:
         if f0 and f1 != f0:
             f0 += (f1 - f0) * ticks_diff(now, self.t0) / ms
         self._out(f0)
+
+
+# ------------------------------------------------------- other controls
+# Buttons and the rotary encoder produce exactly the same events as the
+# joystick, so no screen needs to know which one you're holding.
+
+class _Key:
+    """One debounced push button wired between a GPIO and GND."""
+
+    def __init__(self, pin):
+        self.pin = Pin(pin, Pin.IN, Pin.PULL_UP)
+        self.down = False           # debounced
+        self._raw = False
+        self._t = ticks_ms()
+
+    def update(self, now):
+        """-> 'press', 'release' or None"""
+        raw = not self.pin.value()
+        if raw != self._raw:
+            self._raw = raw
+            self._t = now
+        if raw != self.down and ticks_diff(now, self._t) >= C.BTN_DEBOUNCE_MS:
+            self.down = raw
+            return 'press' if raw else 'release'
+        return None
+
+
+class _Select:
+    """Click/hold logic for an 'ok' button.  While it is held, other inputs
+    can 'use' it (a chord), and then it produces neither click nor hold."""
+
+    def __init__(self, key):
+        self.key = key
+        self.t = 0
+        self.held = False
+        self.used = False
+
+    def poll(self, now, ev):
+        k = self.key
+        e = k.update(now)
+        if e == 'press':
+            self.t = now
+            self.held = False
+            self.used = False
+        elif e == 'release' and not self.held and not self.used:
+            ev.append('click')
+        if k.down and not self.held and not self.used and ticks_diff(now, self.t) >= C.BTN_HOLD_MS:
+            self.held = True
+            ev.append('hold')
+
+
+class Buttons:
+    """3 to 6 push buttons.  Only up, down and ok are required.
+
+    Without left/right buttons: hold ok and press up/down = left/right.
+    Without a back button: hold ok = back (as with the joystick).
+    """
+
+    def __init__(self):
+        self.ok = _Select(_Key(C.PIN_BTN_OK))
+        self.back = _Key(C.PIN_BTN_BACK) if C.PIN_BTN_BACK is not None else None
+        self.dirs = []              # [key, name, current_event, next_repeat]
+        for name, pin in (('up', C.PIN_BTN_UP), ('down', C.PIN_BTN_DOWN),
+                          ('left', C.PIN_BTN_LEFT), ('right', C.PIN_BTN_RIGHT)):
+            if pin is not None:
+                self.dirs.append([_Key(pin), name, None, 0])
+        self.chord = C.PIN_BTN_LEFT is None or C.PIN_BTN_RIGHT is None
+
+    def poll(self, now):
+        ev = []
+        ok = self.ok
+        for d in self.dirs:
+            key, name = d[0], d[1]
+            e = key.update(now)
+            if e == 'press':
+                out = name
+                if self.chord and ok.key.down and not ok.held and name in ('up', 'down'):
+                    out = 'left' if name == 'up' else 'right'
+                    ok.used = True
+                d[2] = out
+                d[3] = ticks_add(now, C.JOY_REPEAT_DELAY_MS)
+                ev.append(out)
+            elif e == 'release':
+                d[2] = None
+            elif key.down and d[2] and ticks_diff(now, d[3]) >= 0:
+                d[3] = ticks_add(now, C.JOY_REPEAT_MS)
+                ev.append(d[2])
+        ok.poll(now, ev)
+        if self.back and self.back.update(now) == 'press':
+            ev.append('hold')
+        return ev
+
+
+# quadrature state table: (previous AB << 2 | new AB) -> step
+_QUAD = (0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0)
+
+
+class Encoder:
+    """Rotary encoder with push switch (KY-040 / EC11).
+    Turn = up/down.  Press = click, long press = back.
+    Press and turn = left/right."""
+
+    def __init__(self):
+        self.a = Pin(C.PIN_ENC_CLK, Pin.IN, Pin.PULL_UP)
+        self.b = Pin(C.PIN_ENC_DT, Pin.IN, Pin.PULL_UP)
+        self.sel = _Select(_Key(C.PIN_ENC_SW))
+        self.state = (self.a.value() << 1) | self.b.value()
+        self.acc = 0
+        trig = Pin.IRQ_RISING | Pin.IRQ_FALLING
+        self.a.irq(self._irq, trig)
+        self.b.irq(self._irq, trig)
+
+    def _irq(self, pin):
+        s = (self.a.value() << 1) | self.b.value()
+        self.acc += _QUAD[(self.state << 2) | s]
+        self.state = s
+
+    def poll(self, now):
+        ev = []
+        step = C.ENC_STEPS_PER_DETENT
+        sel = self.sel
+        self.sel.poll(now, ev)
+        while self.acc >= step or self.acc <= -step:
+            cw = self.acc > 0
+            self.acc += -step if cw else step
+            if C.ENC_INVERT:
+                cw = not cw
+            if sel.key.down and not sel.held:
+                sel.used = True
+                ev.append('right' if cw else 'left')
+            else:
+                ev.append('down' if cw else 'up')
+        return ev
+
+
+class Inputs:
+    """Every enabled control, merged into one stream of events."""
+
+    def __init__(self):
+        self.srcs = []
+        if C.INPUT_JOYSTICK:
+            self.srcs.append(Joystick())
+        if C.INPUT_BUTTONS:
+            self.srcs.append(Buttons())
+        if C.INPUT_ENCODER:
+            self.srcs.append(Encoder())
+        if not self.srcs:
+            print("[input] no controls enabled in config.py!")
+
+    def poll(self, now):
+        ev = []
+        for s in self.srcs:
+            ev += s.poll(now)
+        return ev

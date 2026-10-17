@@ -196,7 +196,7 @@ def run():
     except Exception as e:
         print("[boot] display failed:", e)
         raise
-    joy = hw.Joystick()
+    joy = hw.Inputs()
     buzzer = hw.Buzzer()
     mem = Memory()
     ghost = Ghost(mem)

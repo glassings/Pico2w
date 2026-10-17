@@ -12,6 +12,31 @@ OLED_W = 128
 OLED_H = 64
 OLED_CONTRAST = 180     # 0..255; lower = dimmer = less power
 
+# --------------------------------------------------------------- controls
+# Any mix can be on at once; they all send the same events.
+INPUT_JOYSTICK = False      # True only if the joystick is plugged in
+INPUT_BUTTONS = True
+INPUT_ENCODER = False
+
+# Push buttons: each one between its GPIO and GND (no resistors needed).
+# up, down and ok are required; set the others to None if not fitted.
+#   no left/right buttons -> hold ok + press up/down = left/right
+#   no back button        -> hold ok = back
+PIN_BTN_UP = 18             # physical pin 24
+PIN_BTN_DOWN = 19           # physical pin 25
+PIN_BTN_OK = 20             # physical pin 26
+PIN_BTN_LEFT = None         # e.g. 17 (pin 22)
+PIN_BTN_RIGHT = None        # e.g. 21 (pin 27)
+PIN_BTN_BACK = None         # e.g. 14 (pin 19)
+
+# Rotary encoder (KY-040 / EC11): turn = up/down, press = click,
+# long press = back, press + turn = left/right.
+PIN_ENC_CLK = 2             # physical pin 4  (also called A)
+PIN_ENC_DT = 3              # physical pin 5  (also called B)
+PIN_ENC_SW = 6              # physical pin 9
+ENC_STEPS_PER_DETENT = 4    # try 2 if one click of the knob moves two items
+ENC_INVERT = False          # True if turning right moves up
+
 # --------------------------------------------------------------- joystick
 # Power the module from 3.3V, NOT 5V: the Pico ADC tops out at 3.3V.
 PIN_JOY_X = 26          # ADC0

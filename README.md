@@ -82,6 +82,31 @@ The joystick has to run from 3.3V. At 5V its outputs swing past 3.3V, which
 the ADC pins can't take. Keep your hands off the stick while the Pico boots:
 the centre position is calibrated at power-up.
 
+## Controls hardware
+
+Pick any mix in `config.py` (`INPUT_JOYSTICK`, `INPUT_BUTTONS`, `INPUT_ENCODER`).
+They all send the same events. The default is **push buttons only**.
+
+**Push buttons.** Each one goes between its GPIO and GND, with no resistors
+(the Pico's internal pull-ups are used). Only the first three are required:
+
+| Button | Pico 2 W | Does |
+|---|---|---|
+| up | GP18 (pin 24) | up / previous |
+| down | GP19 (pin 25) | down / next |
+| ok | GP20 (pin 26) | click; hold = back |
+| left *(optional)* | e.g. GP17 (pin 22) | left |
+| right *(optional)* | e.g. GP21 (pin 27) | right |
+| back *(optional)* | e.g. GP14 (pin 19) | back |
+
+GND is right there at pin 23 or 28. Without left/right buttons, **hold ok and press
+up/down** for left/right.
+
+**Rotary encoder** (KY-040 / EC11): CLK → GP2 (pin 4), DT → GP3 (pin 5),
+SW → GP6 (pin 9), + → 3V3, GND → GND. Turn = up/down, press = click, long press =
+back, press and turn = left/right. If one click of the knob moves two items, set
+`ENC_STEPS_PER_DETENT = 2`. If it scrolls the wrong way, flip `ENC_INVERT`.
+
 ## Controls
 
 * **Home (the ghost's room):** click opens the menu. Nudging the stick pushes
