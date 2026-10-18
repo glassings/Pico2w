@@ -180,6 +180,10 @@ def _load_secrets():
         return None, None
 
 
+# CYW43 link status codes that mean "give up"
+_WIFI_ERR = {-1: 'wifi refused', -2: 'wifi not found', -3: 'wrong password'}
+
+
 class Clock:
     """Owns the STA interface while syncing, and gives it back afterwards."""
 
@@ -221,14 +225,16 @@ class Clock:
                 self._start(now)
             return
         if ticks_diff(now, self._t0) > C.CLOCK_SYNC_BUDGET_MS:
-            self._finish(False, 'no answer' if st == 'asking' else 'no wifi', now)
+            self._finish(False, 'ntp no answer' if st == 'asking' else 'wifi timeout', now)
             return
         try:
             if st == 'connecting':
                 if self._wlan.isconnected():
                     self._ask()
-                elif self._wlan.status() < 0:           # wrong password, no AP...
-                    self._finish(False, 'no wifi', now)
+                else:
+                    code = self._wlan.status()
+                    if code < 0:
+                        self._finish(False, _WIFI_ERR.get(code, 'wifi error %d' % code), now)
             elif st == 'asking':
                 self._listen(now)
         except Exception as e:
