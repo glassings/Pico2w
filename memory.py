@@ -27,7 +27,10 @@ def _fresh():
         'alive_s': 0,           # total powered-on seconds ("days alive")
         'boots': 0,
         'last_session_s': 0,    # how long it was on last time
-        'last_wall': 0,         # wall-clock seconds at last save (0 = clock unknown)
+        'last_real': 0,         # real UTC time at last save (0 = never known)
+        'first_real': 0,        # real UTC time of (roughly) the first boot
+        'morning_day': 0,       # day number of the last "good morning"
+        'witch_day': 0,         # day number of the last witching minute
         'fed': 0,               # new signals eaten, all time
         'presences': 0,         # BLE presences sensed, all time
         'familiars': {},        # hash -> [nickname, times_seen]

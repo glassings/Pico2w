@@ -114,6 +114,21 @@ MAX_FAMILIARS = 200         # least-seen ones are forgotten past this
 # ------------------------------------------------------------- trackers
 TRACKER_DEBUG = True        # print every tracker detection to the REPL
 
+# ---------------------------------------------------------------- clock
+# Needs secrets.py (copy secrets.example.py) with your home WiFi.
+CLOCK_ENABLED = True
+TZ = "US_CENTRAL"           # US_EASTERN / US_CENTRAL / US_MOUNTAIN / US_PACIFIC / US_ARIZONA / UTC
+CLOCK_24H = False
+NTP_HOST = "pool.ntp.org"
+CLOCK_SYNC_BUDGET_MS = 8000 # give up on one sync attempt after this
+CLOCK_RESYNC_H = 6
+CLOCK_RETRY_MIN = 30        # after a failed sync
+QUIET_START = 23            # quiet hours (local): naps, dim screen
+QUIET_END = 7
+QUIET_NAP_S = 20            # in quiet hours it dozes off after this idle
+QUIET_CONTRAST = 8          # screen brightness during quiet hours
+WITCHING = (3, 7)           # its hour and minute
+
 # ---------------------------------------------------------------- storage
 STATE_FILE = "ghost_state.json"
 NOTES_FILE = "notes.txt"

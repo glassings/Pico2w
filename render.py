@@ -50,6 +50,7 @@ class Renderer:
         self._burst = 0
         self._kind = 0
         self._inverted = False
+        self._force = 0
 
     # ------------------------------------------------------------ basics
     def clear(self):
@@ -101,11 +102,21 @@ class Renderer:
         row = bytes(self.buf[a:a + W])
         self.buf[a:a + W] = row[-dx:] + row[:-dx]
 
+    def burst(self, frames):
+        """Force heavy glitching for a while (protected rows still spared)."""
+        self._force = frames
+
     def glitch_pass(self, level, protect=None):
         """level 0..1.  protect=(y0, y1) rows that must stay readable."""
         if self._inverted:
             self.o.invert(0)
             self._inverted = False
+        if self._force > 0:
+            self._force -= 1
+            level = 1.0
+            if self._burst <= 0:
+                self._burst = 1
+                self._kind = random.randint(0, 9)
         if self._burst <= 0:
             if not _chance(0.01 + 0.12 * level * level):
                 return

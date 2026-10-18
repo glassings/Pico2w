@@ -59,6 +59,10 @@ class App(Screen):
             gap = random.randint(C.CHATTER_MIN_S, C.CHATTER_MAX_S) * 1000
             if g.restless > 50:
                 gap //= 2
+            if g.daypart == 'evening':
+                gap = gap * 2 // 3              # chattier after dark
+            elif g.daypart == 'night':
+                gap = gap * 3 // 2
             self.next_chat = ticks_add(now, gap)
 
         if ticks_diff(now, self.next_quirk) >= 0:

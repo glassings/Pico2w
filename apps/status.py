@@ -30,7 +30,7 @@ class App(Screen):
         if self.page == 0:
             r.text("what i am", 0, 0)
             r.text("1/2", 104, 0)
-            a = int(s['alive_s'])
+            a = int(g.alive_s)
             rows = (
                 ("alive", "%dd %02dh %02dm" % (a // 86400, a // 3600 % 24, a // 60 % 60)),
                 ("woken", "%d times" % s['boots']),

@@ -36,9 +36,10 @@ To check, run this in the REPL:
 ## Files on the Pico
 
 ```
-/main.py  config.py  hw.py  ghost.py  memory.py  render.py  chrono.py  trackers.py
+/main.py  config.py  hw.py  ghost.py  memory.py  render.py  chrono.py  trackers.py  clock.py
+/secrets.py  (your WiFi; copy secrets.example.py)
 /sprites.py  phrases.py  menu.py  notes.txt
-/apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py  followers.py
+/apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py  followers.py  clockface.py
       timer.py  alarm.py  stopwatch.py  dice.py  notes.py  status.py
 /lib/ssd1306.py          <- already there
 /ghost_state.json        <- created by the ghost; delete it to "reset" the ghost
@@ -181,6 +182,29 @@ listen again, hold to go back.
 
 All of this is tunable in the "listening" block of `config.py`. `WIFI_ENABLED`
 and `BLE_ENABLED` turn either radio off.
+
+## Real clock
+
+With home WiFi in **`secrets.py`** (copy `secrets.example.py`; it's in `.gitignore`
+and never printed or saved), Ghostie asks an NTP server for the time at boot,
+during the wake-up static (up to 8 s, without freezing anything), and again
+every 6 hours. WiFi is switched off again after each sync, and a sync gives way
+to listen/followers, which need the radio.
+
+* **Local time:** `TZ` in `config.py` (US zones with real US daylight-saving rules,
+  or UTC). `import clock; clock.selftest()` in the REPL checks the DST switchovers.
+* **clock** in the menu: big time, date, "synced 2h ago". Click to sync now.
+* **Wake-up lines** use the real time it was off ("3 days. in the dark."), and
+  **status** shows real days since the first boot. Without a sync it falls back
+  to the old behaviour.
+* **Quiet hours** (23:00-07:00): it dozes after 20 s, the screen dims, and a press
+  wakes it with a sleepy line. Timers still ring.
+* **Morning:** the first time it's awake after 7:00 it says good morning.
+* **3:07 am:** its minute, once a night, if the screen is on.
+* Sleepier at night, chattier in the evening.
+
+The clock only counts as known after a sync in the current power-on. (Thonny
+also sets the Pico's clock when it connects, but to your PC's local time, not UTC.)
 
 ## Trackers (in progress)
 

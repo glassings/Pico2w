@@ -28,6 +28,7 @@ class App(Screen):
         self.ble = None
         self.err = None
         ctx.speech.clear()
+        ctx.radio_busy = True
         try:
             import bluetooth
             self.ble = bluetooth.BLE()
@@ -41,6 +42,7 @@ class App(Screen):
 
     def exit(self):
         self._stop()
+        self.ctx.radio_busy = False
 
     def _stop(self):
         if self.ble:

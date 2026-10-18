@@ -39,6 +39,7 @@ class App(Screen):
 
     def exit(self):
         self._stop_ble()
+        self.ctx.radio_busy = False
 
     # ------------------------------------------------------------ scanning
     def start(self):
@@ -46,6 +47,7 @@ class App(Screen):
         now = ctx.now()
         self.state = 'intro'
         self.t0 = now
+        ctx.radio_busy = True
         self.drawn = False
         self.loud = []          # [(ssid, rssi, nickname, is_new)] strongest first
         self.wifi_ids = []
@@ -65,6 +67,7 @@ class App(Screen):
         if not C.WIFI_ENABLED:
             self.deaf += 1
             return
+        self.ctx.clock.abort()              # one radio: the scan wins
         try:
             import network
             w = network.WLAN(network.STA_IF)
@@ -149,6 +152,7 @@ class App(Screen):
         self.ble_seen = {}                      # raw MACs gone
         self.trk = {}
         self._stop_ble()
+        ctx.radio_busy = False
         r = ctx.ghost.feed(self.wifi_ids, ble_ids)
         self.result = r
         p = ctx.puppet

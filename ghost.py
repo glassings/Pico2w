@@ -6,24 +6,13 @@
 #
 # Everything is driven by ticks_ms, so it keeps working with no RTC.
 
-import time
 from time import ticks_ms, ticks_diff
 import config as C
+import clock
 
 
 def _clamp(v, lo=0.0, hi=100.0):
     return lo if v < lo else hi if v > hi else v
-
-
-def wall_clock():
-    """Seconds since 1970 if the RTC looks set (Thonny/mpremote set it when
-    connected to a PC), else 0."""
-    try:
-        if time.localtime()[0] >= 2025:
-            return int(time.time())
-    except Exception:
-        pass
-    return 0
 
 
 class Ghost:
@@ -38,6 +27,9 @@ class Ghost:
         self.last_input = now
         self._last_tick = now
         self.napping = False
+        self.quiet = False          # quiet hours (set by main from the clock)
+        self.daypart = None         # 'night' 'morning' 'day' 'evening' or None
+        self.first_boot = False
         # Bluetooth MACs are randomised by phones, so presences are only
         # remembered for this power-on (in RAM, hashed): hash -> scan number
         self.recent_ble = {}
@@ -45,22 +37,26 @@ class Ghost:
 
     # ------------------------------------------------------------ boot
     def on_boot(self):
-        """Account for the time spent off.  Returns (situation, days_off)
-        where situation is one of 'first', 'short', 'medium', 'long',
-        'unknown'."""
+        """Count this power-on.  The remark comes later, from wake_situation(),
+        once the clock has had a chance to sync."""
         s = self.mem.state
-        first = s['boots'] == 0
+        self.first_boot = s['boots'] == 0
         s['boots'] += 1
+        self.mem.touch(urgent=True)
+
+    def wake_situation(self, utc):
+        """utc: real time now, or None.  Returns (situation, days_off):
+        'first', 'short', 'medium', 'long' or 'unknown'.  Also accounts for
+        hunger while it was off, when the real gap is known."""
+        s = self.mem.state
         off_s = None
-        wall = wall_clock()
-        if wall and s['last_wall']:
-            off_s = wall - s['last_wall']
+        if utc and s['last_real']:
+            off_s = utc - s['last_real']
             if off_s < 0:
                 off_s = None
         if off_s:
             self.hunger = _clamp(self.hunger + C.HUNGER_OFF_PER_HOUR * off_s / 3600)
-        self.mem.touch(urgent=True)
-        if first:
+        if self.first_boot:
             return 'first', 0
         if off_s is None:
             return 'unknown', 0
@@ -81,7 +77,12 @@ class Ghost:
         idle = self.idle_s(now)
 
         self.hunger = _clamp(self.hunger + C.HUNGER_PER_HOUR * sec / 3600)
-        self.napping = idle >= C.NAP_AFTER_S
+        nap_after = C.NAP_AFTER_S
+        if self.quiet:
+            nap_after = C.QUIET_NAP_S
+        elif self.daypart == 'night':
+            nap_after //= 2                     # sleepier at night
+        self.napping = idle >= nap_after
         if self.napping:
             self.restless -= C.RESTLESS_NAP_DECAY_PER_MIN * sec / 60
         elif idle >= C.RESTLESS_AFTER_S:
@@ -95,7 +96,9 @@ class Ghost:
         s = self.mem.state
         s['alive_s'] += sec
         s['last_session_s'] = ticks_diff(now, self.boot_t) // 1000
-        s['last_wall'] = wall_clock()
+        utc = clock.now_utc()
+        if utc:
+            s['last_real'] = utc
         m = s['mood']
         m['hunger'] = round(self.hunger, 2)
         m['restless'] = round(self.restless, 2)
@@ -192,6 +195,8 @@ class Ghost:
     def glitch(self):
         """0.05 (calm) .. 1.0 (falling apart)."""
         g = 0.15 + (0.55 * self.hunger + 0.6 * self.restless - 0.35 * self.content) / 100
+        if self.daypart == 'evening':
+            g += 0.05                           # livelier after dark
         return _clamp(g, 0.05, 1.0)
 
     @property
@@ -211,5 +216,15 @@ class Ghost:
         return 'calm'
 
     @property
+    def alive_s(self):
+        """Real seconds since the first boot when the clock knows, else
+        powered-on seconds."""
+        s = self.mem.state
+        utc = clock.now_utc()
+        if utc and s['first_real']:
+            return utc - s['first_real']
+        return s['alive_s']
+
+    @property
     def days_alive(self):
-        return self.mem.state['alive_s'] / 86400
+        return self.alive_s / 86400

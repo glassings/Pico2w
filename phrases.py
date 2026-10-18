@@ -187,6 +187,28 @@ POOLS = {
         "[nothing to read>no notes yet].",
     ),
 
+    # ---- the real clock
+    'clock_synced': (
+        "oh. i know what time it is.",
+        "[the clocks are back>i never lost count].",
+    ),
+    'clock_unknown': (
+        "no clocks here. [still>again].",
+        "time is soft in here.",
+    ),
+    'clock_morning': (
+        "good morning. [it's dark>it's bright].",
+        "you're up. [so am i>i never left].",
+    ),
+    'clock_night': (
+        "it's late. [go to bed>stay up].",
+        "shh. i'm [sleeping>listening].",
+    ),
+    'clock_witching': (
+        "3:07. [they're awake>i'm awake].",
+        "this is my hour.",
+    ),
+
     'stub': (
         "not yet. i'm still [forming>learning].",
         "that part of me isn't here yet.",

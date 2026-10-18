@@ -15,6 +15,7 @@ from memory import Memory
 from ghost import Ghost
 from render import Renderer, Speech, Puppet, wrap
 from chrono import Countdown, Stopwatch
+import clock
 
 
 class Ctx:
@@ -34,6 +35,10 @@ class Ctx:
         self.stack = []
         self.awake = True
         self._queue = []
+        self.clock = clock.Clock()
+        self.radio_busy = False     # a scan (or later the haunted AP) owns the radio
+        self.booted = False         # the wake-up sequence has finished
+        self.said_synced = False
 
     @staticmethod
     def now():
@@ -101,10 +106,15 @@ class Ctx:
         p = self.puppet
         p.vanish_t = now - 1000     # starts hidden, materialises somewhere
         p.hidden = True
-        self.say(phrases.pick('screen_woke'))
+        self.say(phrases.pick('clock_night' if self.ghost.quiet else 'screen_woke'))
 
 
-def boot_remarks(ghost, situation, days):
+def boot_remarks(ctx):
+    """Called when the wake-up sequence ends, after the first clock sync
+    has succeeded or given up."""
+    ghost = ctx.ghost
+    situation, days = ghost.wake_situation(clock.now_utc())
+    print("[boot] %s, alive %.2f days, mood=%s" % (situation, ghost.days_alive, ghost.mood))
     out = [phrases.pick('wake_' + situation, n=days)]
     if ghost.hunger > 60:
         out.append(phrases.pick('wake_hungry'))
@@ -118,14 +128,19 @@ def loop(ctx):
     r = ctx.r
     oled = ctx.oled
     gc_t = ticks_ms()
+    sec_t = ticks_ms()
 
     while True:
         now = ticks_ms()
         evs = joy.poll(now)
         ctx.buzzer.update(now)
         ctx.watch.tick(now)
+        ctx.clock.poll(now, not ctx.radio_busy)
         if ctx.timer.check(now):
             ctx.alarm(now)
+        if ticks_diff(now, sec_t) >= 1000:
+            sec_t = now
+            clock.behave(ctx, now)
 
         # ---- screen off: just keep time and wait for any input
         if not ctx.awake:
@@ -141,7 +156,7 @@ def loop(ctx):
             if ghost.poke(now):
                 # the first touch only wakes it from its nap
                 ctx.puppet.express('stare', 900, now)
-                ctx.say(phrases.pick('nap_woke'))
+                ctx.say(phrases.pick('clock_night' if ghost.quiet else 'nap_woke'))
             else:
                 for ev in evs:
                     ctx.top.event(ev)
@@ -200,15 +215,14 @@ def run():
     buzzer = hw.Buzzer()
     mem = Memory()
     ghost = Ghost(mem)
-    situation, days = ghost.on_boot()
-    print("[boot] boot #%d, %s, alive %.2f days, mood=%s"
-          % (mem.state['boots'], situation, ghost.days_alive, ghost.mood))
+    ghost.on_boot()
+    print("[boot] boot #%d" % mem.state['boots'])
 
     ctx = Ctx(oled, joy, buzzer, mem, ghost)
     import apps.home
     import apps.wake
     ctx.push(apps.home.App())
-    ctx.push(apps.wake.App(boot_remarks(ghost, situation, days)))
+    ctx.push(apps.wake.App(boot_remarks))
     try:
         loop(ctx)
     except KeyboardInterrupt:

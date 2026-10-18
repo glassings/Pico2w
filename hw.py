@@ -213,23 +213,53 @@ class Buzzer:
 # joystick, so no screen needs to know which one you're holding.
 
 class _Key:
-    """One debounced push button wired between a GPIO and GND."""
+    """One debounced push button wired between a GPIO and GND.
+
+    The main loop only looks every ~50 ms, so a quick tap could slip between
+    two looks.  An edge interrupt latches it so it still counts."""
 
     def __init__(self, pin):
         self.pin = Pin(pin, Pin.IN, Pin.PULL_UP)
         self.down = False           # debounced
         self._raw = False
         self._t = ticks_ms()
+        self._hit = False           # a falling edge was seen (IRQ)
+        self._hit_t = 0
+        self._up_t = 0              # when we last reported a release
+        self._release_next = False
+        try:
+            self.pin.irq(self._edge, Pin.IRQ_FALLING)
+        except Exception:
+            pass
+
+    def _edge(self, pin):
+        self._hit = True
+        self._hit_t = ticks_ms()
 
     def update(self, now):
         """-> 'press', 'release' or None"""
+        if self._release_next:
+            self._release_next = False
+            self.down = False
+            self._up_t = now
+            return 'release'
         raw = not self.pin.value()
         if raw != self._raw:
             self._raw = raw
             self._t = now
         if raw != self.down and ticks_diff(now, self._t) >= C.BTN_DEBOUNCE_MS:
             self.down = raw
+            self._hit = False
+            if not raw:
+                self._up_t = now
             return 'press' if raw else 'release'
+        if self._hit and not self.down and not raw:
+            self._hit = False
+            # a whole tap happened between two looks (ignore release bounce)
+            if ticks_diff(self._hit_t, self._up_t) > 60:
+                self.down = True
+                self._release_next = True
+                return 'press'
         return None
 
 

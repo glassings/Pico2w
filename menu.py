@@ -10,6 +10,7 @@ ITEMS = (
     ('listen', 'listen'),
     ('familiars', 'familiars'),
     ('followers', 'followers'),
+    ('clock', 'clockface'),
     ('timer', 'timer'),
     ('stopwatch', 'stopwatch'),
     ('dice', 'dice'),

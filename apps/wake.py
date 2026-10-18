@@ -11,7 +11,7 @@ class App(Screen):
     allow_screen_off = False
 
     def __init__(self, remarks):
-        self.remarks = remarks      # said, in order, once it has formed
+        self.remarks = remarks      # fn(ctx) -> lines to say once it has formed
 
     def enter(self, ctx):
         super().enter(ctx)
@@ -32,11 +32,15 @@ class App(Screen):
     def _done(self):
         ctx = self.ctx
         ctx.pop()
-        for s in self.remarks:
+        ctx.booted = True
+        for s in self.remarks(ctx):
             ctx.say(s, queue=True)
 
     def update(self, now):
-        if ticks_diff(now, self.t0) > 2300:
+        # after the animation, wait (up to the sync budget) for the clock,
+        # so the first remark can know how long it was really gone
+        t = ticks_diff(now, self.t0)
+        if t > 2300 and (not self.ctx.clock.busy or t > 2300 + C.CLOCK_SYNC_BUDGET_MS):
             self._done()
 
     def draw(self, r, now):
@@ -53,3 +57,6 @@ class App(Screen):
             r.sprite(sprites.GLITCH if (t // 70) % 3 == 0 else sprites.FADE[0], p.x, p.y)
         else:
             r.sprite(sprites.STARE, p.x, p.y)
+            if t > 2300:
+                # still asking the air what time it is
+                r.center("." * (1 + (t // 400) % 3), 52)
