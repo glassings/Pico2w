@@ -209,6 +209,46 @@ POOLS = {
         "this is my hour.",
     ),
 
+    # ---- halloween
+    'halloween_idle': (
+        "the pumpkins are watching.",
+        "[candy>teeth].",
+        "the wall is thinner tonight.",
+        "all in costume. [except me>especially me].",
+    ),
+    'halloween_wake': (
+        "oh. it's that season.",
+        "the veil is [thin>open].",
+    ),
+    'halloween_day': (
+        "tonight's the night. [trick>treat].",
+    ),
+    'knock': (
+        "knock knock.",
+        "someone's at the [door>glass].",
+    ),
+    'treat_given': (
+        "a treat. [for you>for me].",
+        "[good>strange] things tomorrow.",
+    ),
+    'trick_played': (
+        "[boo>hello].",
+        "that was me. [probably>definitely].",
+    ),
+    'knock_missed': (
+        "they left. [rude>good].",
+        "nobody answered. [again>as usual].",
+    ),
+    'halloween_over': (
+        "it's over. [already>good].",
+        "i'll miss the [dark>noise].",
+    ),
+    # (for the haunted access point, later)
+    'haunt_greet_halloween': (
+        "trick or treat. [both>neither].",
+        "you came on the right night.",
+    ),
+
     'stub': (
         "not yet. i'm still [forming>learning].",
         "that part of me isn't here yet.",

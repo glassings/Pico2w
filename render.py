@@ -325,6 +325,7 @@ class Puppet:
         self.ghost_xy = None
         self.asleep = False
         self.hidden = False
+        self.hat = False
 
     def set_bounds(self, x0, y0, x1, y1, snap=False):
         self.bounds = (x0, y0, x1, y1)
@@ -427,6 +428,8 @@ class Puppet:
             if _chance(0.4):
                 spr = sprites.GLITCH
         r.sprite(spr, x, y)
+        if self.hat:
+            r.sprite(sprites.HAT, x + 4, y - 9)
 
         if self.asleep:
             # little z's rising off it

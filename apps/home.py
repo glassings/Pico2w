@@ -47,8 +47,13 @@ class App(Screen):
         if g.napping:
             return
 
+        hw = ctx.hw
+        if p.hat and p.bounds[1] < 9:
+            p.set_bounds(0, 9, 104, 22)         # room for the hat
         if not ctx.speech.busy and ticks_diff(now, self.next_chat) >= 0:
-            if random.random() < 0.05 + 0.08 * lvl:
+            if random.random() < 0.3 * hw:
+                ctx.say(phrases.pick('halloween_idle'))
+            elif random.random() < (0.05 + 0.08 * lvl) * (1 + 2 * hw):
                 ctx.say(phrases.pick('uncanny'))
                 p.express('stare', 2200, now)
                 import hw
@@ -74,6 +79,9 @@ class App(Screen):
                 p.express('stare', 2500, now)
             elif lvl > 0.45:
                 p.express('nervous', 2000, now)
+                if random.random() < 0.3 * hw:
+                    import hw as _hw
+                    ctx.chirp(_hw.WHISPER)
             else:
                 p.express('excited', 900, now)
             self.next_quirk = ticks_add(now, random.randint(9000, 24000))
@@ -90,5 +98,6 @@ class App(Screen):
             import chrono
             t = chrono.fmt(ctx.timer.remaining(now) + 999)
             r.text(t, 128 - 8 * len(t), 0)
+        ctx.season.draw_room(r, ctx, now)
         ctx.puppet.draw(r, now, lvl)
         ctx.speech.draw(r, 47, now, lvl)

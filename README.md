@@ -36,10 +36,10 @@ To check, run this in the REPL:
 ## Files on the Pico
 
 ```
-/main.py  config.py  hw.py  ghost.py  memory.py  render.py  chrono.py  trackers.py  clock.py
+/main.py  config.py  hw.py  ghost.py  memory.py  render.py  chrono.py  trackers.py  clock.py  halloween.py
 /secrets.py  (your WiFi; copy secrets.example.py)
 /sprites.py  phrases.py  menu.py  notes.txt
-/apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py  followers.py  clockface.py
+/apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py  followers.py  clockface.py  knock.py  settings.py
       timer.py  alarm.py  stopwatch.py  dice.py  notes.py  status.py
 /lib/ssd1306.py          <- already there
 /ghost_state.json        <- created by the ghost; delete it to "reset" the ghost
@@ -205,6 +205,22 @@ to listen/followers, which need the radio.
 
 The clock only counts as known after a sync in the current power-on. (Thonny
 also sets the Pico's clock when it connects, but to your PC's local time, not UTC.)
+
+## Halloween mode
+
+Automatic from Oct 24 (needs the real clock): spookiness ramps from 0 to 100% on
+Oct 31, then stops on Nov 1 (with one goodbye line). Override in the device's
+**settings** menu: `halloween auto / on / off` ("on" = full spookiness now).
+
+* More glitching (up to x1.6, capped so values stay readable), more uncanny remarks
+  and whispers, Halloween lines in its chatter, an extra boot line, heavier static.
+* A witch hat, a jack-o'-lantern in the corner, eyes blinking in the dark, and a bat
+  that flaps across now and then.
+* **Oct 31, 17:00-23:00:** up to 6 knocks at random. Three taps and "knock knock":
+  click (one button: 1 click) = treat (a fortune, it's happier), left (one button:
+  long press) = trick (a harmless glitch show), ignore it = it sulks.
+* Testing: `HALLOWEEN_PRETEND_OCT31 = True` in `config.py` makes every day Oct 31
+  with the door open and knocks every 1-3 minutes.
 
 ## Trackers (in progress)
 

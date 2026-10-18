@@ -16,6 +16,7 @@ ITEMS = (
     ('dice', 'dice'),
     ('notes', 'notes'),
     ('status', 'status'),
+    ('settings', 'settings'),
     ('sleep', 'sleep'),
 )
 ROWS = 5            # visible at once

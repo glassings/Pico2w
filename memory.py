@@ -36,6 +36,9 @@ def _fresh():
         'familiars': {},        # hash -> [nickname, times_seen]
         'mood': {'hunger': 40.0, 'restless': 10.0, 'content': 50.0},
         'timer_s': 300,         # last countdown you set
+        'halloween': 'auto',    # auto / on / off
+        'hw_over': 0,           # year we last said 'halloween_over'
+        'knocks': [0, 0],       # [day number, knocks that night]
     }
 
 

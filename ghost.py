@@ -29,6 +29,7 @@ class Ghost:
         self.napping = False
         self.quiet = False          # quiet hours (set by main from the clock)
         self.daypart = None         # 'night' 'morning' 'day' 'evening' or None
+        self.hw = 0.0               # halloween level (set by halloween.py)
         self.first_boot = False
         # Bluetooth MACs are randomised by phones, so presences are only
         # remembered for this power-on (in RAM, hashed): hash -> scan number
@@ -197,7 +198,8 @@ class Ghost:
         g = 0.15 + (0.55 * self.hunger + 0.6 * self.restless - 0.35 * self.content) / 100
         if self.daypart == 'evening':
             g += 0.05                           # livelier after dark
-        return _clamp(g, 0.05, 1.0)
+        g *= 1 + 0.6 * self.hw                  # the season
+        return _clamp(g, 0.05, 0.95 if self.hw else 1.0)
 
     @property
     def mood(self):

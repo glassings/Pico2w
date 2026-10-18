@@ -129,6 +129,15 @@ QUIET_NAP_S = 20            # in quiet hours it dozes off after this idle
 QUIET_CONTRAST = 8          # screen brightness during quiet hours
 WITCHING = (3, 7)           # its hour and minute
 
+# ------------------------------------------------------------ halloween
+# The auto/on/off switch lives in the device's settings menu.
+HALLOWEEN_PRETEND_OCT31 = False # testing: act as if it's Oct 31, knocks soon
+KNOCK_FROM = 17             # trick-or-treat hours on Oct 31 (local)
+KNOCK_UNTIL = 23
+KNOCK_GAP_MIN = (8, 20)     # minutes between knocks (random)
+KNOCK_MAX = 6               # knocks per night
+HALLOWEEN_SSIDS = ("trick or treat", "the veil is thin", "do not open the door")
+
 # ---------------------------------------------------------------- storage
 STATE_FILE = "ghost_state.json"
 NOTES_FILE = "notes.txt"

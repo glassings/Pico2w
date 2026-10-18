@@ -16,6 +16,7 @@ from ghost import Ghost
 from render import Renderer, Speech, Puppet, wrap
 from chrono import Countdown, Stopwatch
 import clock
+import halloween
 
 
 class Ctx:
@@ -39,6 +40,8 @@ class Ctx:
         self.radio_busy = False     # a scan (or later the haunted AP) owns the radio
         self.booted = False         # the wake-up sequence has finished
         self.said_synced = False
+        self.hw = 0.0               # halloween level, 0..1
+        self.season = halloween.Season()
 
     @staticmethod
     def now():
@@ -116,6 +119,12 @@ def boot_remarks(ctx):
     situation, days = ghost.wake_situation(clock.now_utc())
     print("[boot] %s, alive %.2f days, mood=%s" % (situation, ghost.days_alive, ghost.mood))
     out = [phrases.pick('wake_' + situation, n=days)]
+    ctx.season.tick(ctx, ticks_ms())            # the date may be known now
+    lt = clock.localtime()
+    if halloween.is_oct31(lt) and ctx.hw > 0:
+        out.append(phrases.pick('halloween_day'))
+    elif ctx.hw > 0:
+        out.append(phrases.pick('halloween_wake'))
     if ghost.hunger > 60:
         out.append(phrases.pick('wake_hungry'))
     return out
@@ -141,6 +150,7 @@ def loop(ctx):
         if ticks_diff(now, sec_t) >= 1000:
             sec_t = now
             clock.behave(ctx, now)
+            ctx.season.tick(ctx, now)
 
         # ---- screen off: just keep time and wait for any input
         if not ctx.awake:
@@ -219,6 +229,7 @@ def run():
     print("[boot] boot #%d" % mem.state['boots'])
 
     ctx = Ctx(oled, joy, buzzer, mem, ghost)
+    ctx.season.tick(ctx, ticks_ms())            # 'on' works before any sync
     import apps.home
     import apps.wake
     ctx.push(apps.home.App())

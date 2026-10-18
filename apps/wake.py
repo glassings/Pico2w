@@ -46,8 +46,9 @@ class App(Screen):
     def draw(self, r, now):
         t = ticks_diff(now, self.t0)
         p = self.ctx.puppet
+        heavy = 1 if self.ctx.hw > 0.5 else 0     # thicker static in season
         if t < 700:
-            r.static(2 if t < 350 else 3)
+            r.static((2 if t < 350 else 3) - heavy)
             if t > 450 and (t // 50) & 1:
                 r.o.fill_rect(0, (t // 4) % 64, 128, 3, 1)     # rolling bar
         elif t < 1300:
