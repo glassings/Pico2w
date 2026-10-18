@@ -198,7 +198,10 @@ _last = {}
 
 
 def pick(key, **fmt):
-    pool = POOLS[key]
+    pool = POOLS.get(key)
+    if not pool:
+        print("[phrases] missing pool:", key)
+        return "..."
     s = random.choice(pool)
     if len(pool) > 1:
         while s == _last.get(key):
