@@ -39,6 +39,7 @@ def _fresh():
         'halloween': 'auto',    # auto / on / off
         'hw_over': 0,           # year we last said 'halloween_over'
         'knocks': [0, 0],       # [day number, knocks that night]
+        'tg_wpm': 8,            # telegraph speed: 5..20 or 'auto'
     }
 
 

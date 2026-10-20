@@ -145,6 +145,7 @@ TELEGRAPH_TONE_HZ = 600
 TELEGRAPH_WPM = 8           # 5..20 (or 'auto' inside the app)
 TELEGRAPH_EXIT_MS = 1500    # holding the key this long leaves the app
 TELEGRAPH_DEBOUNCE_MS = 10
+TELEGRAPH_DEBUG = False     # show raw press/gap timings instead of the ghost's lines
 
 # ---------------------------------------------------------------- storage
 STATE_FILE = "ghost_state.json"
