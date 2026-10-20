@@ -36,10 +36,10 @@ To check, run this in the REPL:
 ## Files on the Pico
 
 ```
-/main.py  config.py  hw.py  ghost.py  memory.py  render.py  chrono.py  trackers.py  clock.py  halloween.py
+/main.py  config.py  hw.py  ghost.py  memory.py  render.py  chrono.py  trackers.py  clock.py  halloween.py  morse.py
 /secrets.py  (your WiFi; copy secrets.example.py)
 /sprites.py  phrases.py  menu.py  notes.txt
-/apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py  followers.py  clockface.py  knock.py  settings.py
+/apps/__init__.py  home.py  wake.py  sleep.py  stub.py  listen.py  familiars.py  followers.py  clockface.py  knock.py  settings.py  telegraph.py
       timer.py  alarm.py  stopwatch.py  dice.py  notes.py  status.py
 /lib/ssd1306.py          <- already there
 /ghost_state.json        <- created by the ghost; delete it to "reset" the ghost
@@ -205,6 +205,19 @@ to listen/followers, which need the radio.
 
 The clock only counts as known after a sync in the current power-on. (Thonny
 also sets the Pico's clock when it connects, but to your PC's local time, not UTC.)
+
+## Telegraph (in progress: step 1 of 5)
+
+Menu → **telegraph** turns the button into a Morse key. The key is read by an
+interrupt on both edges into a ring buffer, so even a 60 ms dot is caught while the
+screen redraws. A 600 Hz sidetone sounds while the key is down (`TELEGRAPH_SIDETONE`,
+`TELEGRAPH_TONE_HZ`), and a light in the corner is its visual twin.
+
+The screen shows the symbols being keyed, the decoded text, the last press and gap
+in ms (`.` same letter, `|` letter break, `/` word break), and the unit length.
+**Hold the key 1.5 s to leave.** Full ITU table (A-Z, 0-9, `. , ? / - ( ) @ = +`);
+8+ dots erases the last character; `...---...` in one run is SOS.
+Self-test: `import morse; morse.selftest()`.
 
 ## Halloween mode
 

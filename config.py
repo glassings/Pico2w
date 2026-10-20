@@ -138,6 +138,14 @@ KNOCK_GAP_MIN = (8, 20)     # minutes between knocks (random)
 KNOCK_MAX = 6               # knocks per night
 HALLOWEEN_SSIDS = ("trick or treat", "the veil is thin", "do not open the door")
 
+# ------------------------------------------------------------ telegraph
+TELEGRAPH_PIN = 20          # the key: the one button (GP20, physical pin 26)
+TELEGRAPH_SIDETONE = True
+TELEGRAPH_TONE_HZ = 600
+TELEGRAPH_WPM = 8           # 5..20 (or 'auto' inside the app)
+TELEGRAPH_EXIT_MS = 1500    # holding the key this long leaves the app
+TELEGRAPH_DEBOUNCE_MS = 10
+
 # ---------------------------------------------------------------- storage
 STATE_FILE = "ghost_state.json"
 NOTES_FILE = "notes.txt"

@@ -11,6 +11,7 @@ ITEMS = (
     ('familiars', 'familiars'),
     ('followers', 'followers'),
     ('clock', 'clockface'),
+    ('telegraph', 'telegraph'),
     ('timer', 'timer'),
     ('stopwatch', 'stopwatch'),
     ('dice', 'dice'),

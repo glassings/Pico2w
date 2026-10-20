@@ -13,6 +13,10 @@ class App:
         """Called when a screen above this one closes."""
         pass
 
+    def cover(self):
+        """Called when another screen (e.g. the timer alarm) opens on top."""
+        pass
+
     def exit(self):
         pass
 

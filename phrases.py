@@ -249,6 +249,36 @@ POOLS = {
         "you came on the right night.",
     ),
 
+    # ---- telegraph
+    'telegraph_start': (
+        "tap. i'll [listen>hear you].",
+        "say something. [anything>quietly].",
+    ),
+    'telegraph_word': (
+        "i understood that.",
+        "[hello>boo] to you too.",
+    ),
+    'telegraph_sos': (
+        "[i heard that>don't]. i heard that.",
+        "help is [coming>here].",
+    ),
+    'telegraph_good': (
+        "clear. [very clear>too clear].",
+        "perfect timing.",
+    ),
+    'telegraph_miss': (
+        "[not quite>close].",
+        "again. slower.",
+    ),
+    'telegraph_levelup': (
+        "new letters. [be careful>how exciting].",
+        "you're getting good.",
+    ),
+    'telegraph_listen': (
+        "listen. [don't read>don't look].",
+        "ears open.",
+    ),
+
     'stub': (
         "not yet. i'm still [forming>learning].",
         "that part of me isn't here yet.",

@@ -177,6 +177,11 @@ class Buzzer:
         self.seq = None
         self._out(0)
 
+    def key_tone(self, on):
+        """Telegraph sidetone: on/off right now (safe to call from an IRQ)."""
+        self.seq = None
+        self._out(C.TELEGRAPH_TONE_HZ if on else 0)
+
     def _out(self, f):
         f = int(f)
         if f == self._f:
@@ -236,6 +241,12 @@ class _Key:
     def _edge(self, pin):
         self._hit = True
         self._hit_t = ticks_ms()
+
+    def arm(self):
+        try:
+            self.pin.irq(self._edge, Pin.IRQ_FALLING)
+        except Exception:
+            pass
 
     def update(self, now):
         """-> 'press', 'release' or None"""
@@ -427,3 +438,81 @@ class Inputs:
         for s in self.srcs:
             ev += s.poll(now)
         return ev
+
+    def rearm(self):
+        """Give the buttons their interrupts back (after the telegraph
+        key borrowed a pin)."""
+        for s in self.srcs:
+            for k in ('key', 'back'):
+                if isinstance(getattr(s, k, None), _Key):
+                    getattr(s, k).arm()
+            for k in ('ok', 'sel'):
+                if getattr(s, k, None) is not None:
+                    getattr(s, k).key.arm()
+            for d in getattr(s, 'dirs', ()):
+                d[0].arm()
+
+
+
+# ------------------------------------------------------- telegraph key
+# The OLED takes ~25 ms to redraw, so a dot can come and go between two
+# looks.  Instead, an IRQ on both edges writes (ticks_us, level) into a
+# small preallocated ring buffer, and the loop drains it.  Nothing is
+# allocated in the IRQ.
+
+from array import array
+from time import ticks_us
+
+
+class KeyLine:
+    SIZE = 64
+
+    def __init__(self, buzzer=None):
+        self.pin = Pin(C.TELEGRAPH_PIN, Pin.IN, Pin.PULL_UP)
+        self.bz = buzzer if C.TELEGRAPH_SIDETONE else None
+        self.ts = array('i', [0] * self.SIZE)
+        self.lv = bytearray(self.SIZE)
+        self.head = 0               # written by the IRQ
+        self.tail = 0               # read by the loop
+        self.level = 1 if not self.pin.value() else 0    # 1 = key down
+        self.last_us = ticks_us()
+        self.muted = False          # True while another screen covers ours
+        self.deb_us = C.TELEGRAPH_DEBOUNCE_MS * 1000
+        self.pin.irq(self._irq, Pin.IRQ_FALLING | Pin.IRQ_RISING)
+
+    def _irq(self, pin):
+        t = ticks_us()
+        v = 0 if pin.value() else 1
+        if v == self.level or ticks_diff(t, self.last_us) < self.deb_us:
+            return                  # a bounce, or no real change
+        self.level = v
+        self.last_us = t
+        if self.bz and not self.muted:
+            self.bz.key_tone(v)
+        h = self.head
+        self.ts[h] = t
+        self.lv[h] = v
+        self.head = (h + 1) % self.SIZE
+
+    def events(self):
+        """Drain -> list of (ticks_us, level).  Also repairs a missed final
+        edge if the key settled while we were ignoring bounces."""
+        out = []
+        while self.tail != self.head:
+            i = self.tail
+            out.append((self.ts[i], self.lv[i]))
+            self.tail = (i + 1) % self.SIZE
+        v = 0 if self.pin.value() else 1
+        t = ticks_us()
+        if v != self.level and ticks_diff(t, self.last_us) >= self.deb_us:
+            self.level = v
+            self.last_us = t
+            if self.bz and not self.muted:
+                self.bz.key_tone(v)
+            out.append((t, v))
+        return out
+
+    def close(self):
+        self.pin.irq(None)
+        if self.bz:
+            self.bz.key_tone(0)

@@ -53,6 +53,8 @@ class Ctx:
         return self.stack[-1]
 
     def push(self, app):
+        if self.stack:
+            self.top.cover()
         self.stack.append(app)
         app.enter(self)
 
